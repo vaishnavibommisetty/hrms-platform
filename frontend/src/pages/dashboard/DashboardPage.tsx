@@ -204,7 +204,7 @@ export default function DashboardPage() {
           <KpiCard
             label="Monthly Payroll"
             value={formatCurrency(metrics.monthly_payroll)}
-            sub="Current month (gross)"
+            sub="Latest approved run (net)"
             icon={DollarSign}
             gradient="linear-gradient(135deg, #dcfce7, #bbf7d0)"
             iconColor="text-green-700"
@@ -222,7 +222,7 @@ export default function DashboardPage() {
           <KpiCard
             label="Avg Performance"
             value={metrics.avg_performance_score != null ? `${metrics.avg_performance_score}/100` : '—'}
-            sub="FY 2024-25"
+            sub="Across completed reviews"
             icon={TrendingUp}
             gradient="linear-gradient(135deg, #fef3c7, #fde68a)"
             iconColor="text-amber-700"
@@ -372,7 +372,7 @@ export default function DashboardPage() {
                           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
                           style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
                         >
-                          {emp.name.charAt(0).toUpperCase()}
+                          {(emp.name ?? '?').charAt(0).toUpperCase()}
                         </div>
                         <span className="text-sm font-semibold text-slate-900">{emp.name}</span>
                       </div>
@@ -400,7 +400,7 @@ export default function DashboardPage() {
                             emp.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'
                           }`}
                         />
-                        {emp.status.charAt(0).toUpperCase() + emp.status.slice(1)}
+                        {(emp.status ?? 'active').replace('_', ' ').replace(/^./, (c) => c.toUpperCase())}
                       </span>
                     </td>
                   </tr>
