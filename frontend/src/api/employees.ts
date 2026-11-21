@@ -20,7 +20,7 @@ export const employeesApi = {
     if (filters.department_id) params.set('department_id', String(filters.department_id))
     if (filters.status) params.set('status', filters.status)
     if (filters.sort_by) params.set('sort_by', filters.sort_by)
-    if (filters.sort_dir) params.set('sort_dir', filters.sort_dir)
+    if (filters.sort_dir) params.set('sort_order', filters.sort_dir)
     const { data } = await apiClient.get<PaginatedResponse<Employee>>(`/employees?${params}`)
     return data
   },
@@ -46,9 +46,9 @@ export const employeesApi = {
 }
 
 export const departmentsApi = {
-  list: async (): Promise<PaginatedResponse<Department>> => {
-    const { data } = await apiClient.get<PaginatedResponse<Department>>('/departments?page_size=100')
-    return data
+  list: async (): Promise<{ items: Department[] }> => {
+    const { data } = await apiClient.get<Department[]>('/departments')
+    return { items: data }
   },
 
   getDesignations: async (deptId: number): Promise<Designation[]> => {
