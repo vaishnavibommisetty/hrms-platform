@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { employeesApi } from '../../api/employees'
+import { salaryApi } from '../../api/modules'
 import type { Employee } from '../../types'
 import { ArrowLeft, User, Briefcase, DollarSign, Calendar, Mail, Phone, MapPin, AlertTriangle } from 'lucide-react'
 
@@ -23,7 +24,7 @@ export default function EmployeeDetailPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-slate-500 text-sm">Loading employee...</p>
         </div>
       </div>
@@ -33,7 +34,7 @@ export default function EmployeeDetailPage() {
   if (error || !employee) {
     return (
       <div className="p-8">
-        <Link to="/employees" className="flex items-center gap-2 text-indigo-600 text-sm mb-6">
+        <Link to="/employees" className="flex items-center gap-2 text-emerald-600 text-sm mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to Employees
         </Link>
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center gap-3">
@@ -56,7 +57,7 @@ export default function EmployeeDetailPage() {
       {/* Back */}
       <Link
         to="/employees"
-        className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+        className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Employees
@@ -65,7 +66,7 @@ export default function EmployeeDetailPage() {
       {/* Profile header */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex items-start gap-5">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-400 to-indigo-700 rounded-2xl flex items-center justify-center flex-shrink-0">
+          <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-700 rounded-2xl flex items-center justify-center flex-shrink-0">
             <span className="text-white text-2xl font-bold">
               {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
             </span>
@@ -90,7 +91,7 @@ export default function EmployeeDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Contact Info */}
         <InfoCard title="Contact Information" icon={User}>
-          <InfoRow icon={Mail} label="Email" value={employee.email} />
+          <InfoRow icon={Mail} label="Email" value={employee.email} plain />
           <InfoRow icon={Phone} label="Phone" value={employee.phone} />
           <InfoRow icon={MapPin} label="Address" value={employee.address} />
         </InfoCard>
@@ -108,15 +109,11 @@ export default function EmployeeDetailPage() {
 
         {/* Compensation */}
         <InfoCard title="Compensation" icon={DollarSign}>
-          <InfoRow
-            icon={DollarSign}
-            label="Gross CTC"
-            value={employee.gross_ctc ? `₹${employee.gross_ctc.toLocaleString('en-IN')}/month` : undefined}
-          />
           <InfoRow icon={DollarSign} label="Annual CTC" value={
-            employee.gross_ctc
-              ? `₹${(employee.gross_ctc * 12).toLocaleString('en-IN')}/year`
-              : undefined
+            employee.gross_ctc ? `₹${Number(employee.gross_ctc).toLocaleString('en-IN')} / year` : undefined
+          } />
+          <InfoRow icon={DollarSign} label="Monthly gross" value={
+            employee.gross_ctc ? `₹${Math.round(Number(employee.gross_ctc) / 12).toLocaleString('en-IN')} / month` : undefined
           } />
         </InfoCard>
 
@@ -132,7 +129,51 @@ export default function EmployeeDetailPage() {
           } />
         </InfoCard>
       </div>
+      <div className="mt-5"><SalaryBreakdown employeeId={employee.id} /></div>
     </div>
+  )
+}
+
+function SalaryBreakdown({ employeeId }: { employeeId: number }) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof salaryApi.employee>> | null>(null)
+  useEffect(() => { salaryApi.employee(employeeId).then(setData).catch(() => setData(null)) }, [employeeId])
+  if (!data) return null
+  const b = data.breakdown
+  return (
+    <InfoCard title={data.current ? `Monthly salary · ${data.current.structure_name}` : 'Monthly salary'} icon={DollarSign}>
+      {!b ? <p className="text-sm text-slate-400">No salary structure assigned yet. Assign one from Salary Structures.</p> : (
+        <div className="grid sm:grid-cols-2 gap-6 text-sm">
+          {(['earning', 'deduction'] as const).map((t) => (
+            <div key={t}>
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{t === 'earning' ? 'Earnings' : 'Deductions'}</div>
+              {b.items.filter((i) => i.type === t).map((i) => (
+                <div key={i.code} className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-600">{i.name}</span>
+                  <span className="tabular-nums">₹{i.amount.toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+              <div className={`flex justify-between pt-2 font-semibold ${t === 'deduction' ? 'text-rose-600' : ''}`}>
+                <span>Total</span><span className="tabular-nums">₹{(t === 'earning' ? b.total_earnings : b.total_deductions).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+          ))}
+          <div className="sm:col-span-2 bg-emerald-50 rounded-xl px-4 py-3 flex justify-between font-semibold text-emerald-800">
+            <span>Take-home per month</span><span className="tabular-nums">₹{b.net_pay.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+      )}
+      {data.history.length > 1 && (
+        <div className="mt-4 pt-3 border-t border-slate-100">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Salary history</div>
+          {data.history.map((h, i) => (
+            <div key={i} className="flex justify-between text-sm py-0.5">
+              <span className="text-slate-500">{new Date(h.effective_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })} · {h.structure_name}</span>
+              <span className="tabular-nums">₹{h.gross_ctc.toLocaleString('en-IN')}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </InfoCard>
   )
 }
 
@@ -148,7 +189,7 @@ function InfoCard({
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5">
       <div className="flex items-center gap-2.5 mb-4">
-        <Icon className="w-4 h-4 text-indigo-600" />
+        <Icon className="w-4 h-4 text-emerald-600" />
         <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
       </div>
       <div className="space-y-3">{children}</div>
@@ -160,17 +201,19 @@ function InfoRow({
   icon: Icon,
   label,
   value,
+  plain,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value?: string | null
+  plain?: boolean
 }) {
   return (
     <div className="flex items-start gap-3">
       <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
       <div className="min-w-0">
         <div className="text-xs text-slate-400 mb-0.5">{label}</div>
-        <div className="text-sm text-slate-900 capitalize">{value ?? '—'}</div>
+        <div className={`text-sm text-slate-900 break-words ${plain ? '' : 'capitalize'}`}>{value ?? '—'}</div>
       </div>
     </div>
   )
