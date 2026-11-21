@@ -113,7 +113,7 @@ class Employee(Base):
     department = relationship("Department", back_populates="employees")
     designation = relationship("Designation", back_populates="employees")
     manager = relationship("Employee", remote_side=[id], foreign_keys=[manager_id])
-    reportees = relationship("Employee", foreign_keys=[manager_id])
+    reportees = relationship("Employee", foreign_keys=[manager_id], overlaps="manager")
     salary_assignments = relationship("EmployeeSalaryAssignment", back_populates="employee")
     compensation_plans = relationship("CompensationPlan", back_populates="employee")
     performance_reviews = relationship("PerformanceReview", back_populates="employee")
