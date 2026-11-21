@@ -19,7 +19,7 @@ def _resolve_company(current_user: User) -> int:
     return current_user.company_id
 
 
-@router.get("/", response_model=PaginatedResponse[EmployeeOut])
+@router.get("", response_model=PaginatedResponse[EmployeeOut])
 def list_employees(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -41,7 +41,7 @@ def list_employees(
                              page_size=page_size, total_pages=total_pages)
 
 
-@router.post("/", response_model=EmployeeOut, status_code=201)
+@router.post("", response_model=EmployeeOut, status_code=201)
 def create_employee(
     data: EmployeeCreate,
     current_user: User = Depends(get_hr_or_above),

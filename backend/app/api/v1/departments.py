@@ -17,7 +17,7 @@ def _company_id(user: User) -> int:
     return user.company_id
 
 
-@router.get("/", response_model=List[DepartmentOut])
+@router.get("", response_model=List[DepartmentOut])
 def list_departments(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -38,7 +38,7 @@ def list_departments(
     return result
 
 
-@router.post("/", response_model=DepartmentOut, status_code=201)
+@router.post("", response_model=DepartmentOut, status_code=201)
 def create_department(
     data: DepartmentCreate,
     current_user: User = Depends(get_hr_or_above),

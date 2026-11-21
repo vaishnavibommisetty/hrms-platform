@@ -13,7 +13,7 @@ from app.services.audit_service import log_action
 router = APIRouter(prefix="/companies", tags=["Companies"])
 
 
-@router.get("/", response_model=List[CompanyOut])
+@router.get("", response_model=List[CompanyOut])
 def list_companies(
     current_user: User = Depends(get_platform_admin),
     db: Session = Depends(get_db),
@@ -30,7 +30,7 @@ def list_companies(
     return result
 
 
-@router.post("/", response_model=CompanyOut, status_code=201)
+@router.post("", response_model=CompanyOut, status_code=201)
 def create_company(
     data: CompanyCreate,
     current_user: User = Depends(get_platform_admin),

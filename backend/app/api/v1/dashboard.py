@@ -59,18 +59,8 @@ def get_dashboard_metrics(
 
     budget_utilization = None
     if comp_cycle and comp_cycle.total_budget:
-        from app.models.compensation import CompensationPlan, PlanStatus
-        approved_plans = db.query(CompensationPlan).filter(
-            CompensationPlan.cycle_id == comp_cycle.id,
-            CompensationPlan.status == PlanStatus.APPROVED,
-        ).all()
-        total_increment_cost = sum(
-            (float(p.final_new_salary or 0) - float(p.current_salary or 0)) * 12
-            for p in approved_plans
-        )
-        budget_utilization = round(
-            (total_increment_cost / float(comp_cycle.total_budget)) * 100, 1
-        ) if comp_cycle.total_budget > 0 else 0.0
+        from app.services.compensation_service import budget_summary
+        budget_utilization = budget_summary(comp_cycle)["utilization_pct"]
 
     # --- AVERAGE PERFORMANCE SCORE ---
     perf_query = db.query(func.avg(PerformanceReview.final_score)).filter(
@@ -87,24 +77,21 @@ def get_dashboard_metrics(
 
     # --- PENDING APPROVALS ---
     approval_query = db.query(ApprovalRequest).filter(
-        ApprovalRequest.status == RequestStatus.IN_PROGRESS
+        ApprovalRequest.status.in_([RequestStatus.PENDING, RequestStatus.IN_PROGRESS])
     )
     if company_id:
         approval_query = approval_query.filter(ApprovalRequest.company_id == company_id)
     pending_approvals = approval_query.count()
 
-    # --- QA METRICS ---
-    exec_query = db.query(TestExecution)
+    # --- QA METRICS (latest result of each test case) ---
+    from app.models.qa import TestCase, TestPlan
+    case_query = db.query(TestCase)
     if company_id:
-        from app.models.qa import TestCase, TestPlan
-        exec_query = exec_query.join(TestCase).join(TestPlan).filter(
-            TestPlan.company_id == company_id
-        )
-    total_executions = exec_query.count()
-    passed_executions = exec_query.filter(
-        TestExecution.status == ExecutionStatus.PASSED
-    ).count()
-    qa_pass_pct = round((passed_executions / total_executions * 100), 1) if total_executions > 0 else 0.0
+        case_query = case_query.join(TestPlan).filter(TestPlan.company_id == company_id)
+    latest = [max(c.executions, key=lambda e: (e.executed_at, e.id))
+              for c in case_query.all() if c.executions]
+    passed = len([e for e in latest if e.status == ExecutionStatus.PASSED])
+    qa_pass_pct = round(passed / len(latest) * 100, 1) if latest else 0.0
 
     defect_query = db.query(Defect).filter(
         Defect.status.in_([DefectStatus.OPEN, DefectStatus.IN_PROGRESS, DefectStatus.REOPENED])
@@ -140,6 +127,7 @@ def get_dashboard_metrics(
             "employee_code": e.employee_code,
             "department": e.department.name if e.department else None,
             "joining_date": e.joining_date.isoformat() if e.joining_date else None,
+            "status": e.status.value if e.status else "active",
         }
         for e in recent_employees
     ]
