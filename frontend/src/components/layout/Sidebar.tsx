@@ -13,6 +13,7 @@ import {
   Building2,
   X,
   Zap,
+  ScrollText,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -27,13 +28,14 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Employees', href: '/employees', icon: Users },
-  { label: 'Salary Structures', href: '/salary', icon: DollarSign, comingSoon: true },
-  { label: 'Performance', href: '/performance', icon: TrendingUp, comingSoon: true },
-  { label: 'Compensation', href: '/compensation', icon: BarChart3, comingSoon: true },
-  { label: 'Payroll', href: '/payroll', icon: CreditCard, comingSoon: true },
-  { label: 'Approvals', href: '/approvals', icon: GitBranch, comingSoon: true },
-  { label: 'QA Management', href: '/qa', icon: ClipboardCheck, comingSoon: true },
-  { label: 'SQL Reports', href: '/reports', icon: BookOpen, comingSoon: true },
+  { label: 'Salary Structures', href: '/salary', icon: DollarSign },
+  { label: 'Performance', href: '/performance', icon: TrendingUp },
+  { label: 'Compensation', href: '/compensation', icon: BarChart3 },
+  { label: 'Payroll', href: '/payroll', icon: CreditCard },
+  { label: 'Approvals', href: '/approvals', icon: GitBranch },
+  { label: 'QA Management', href: '/qa', icon: ClipboardCheck },
+  { label: 'SQL Reports', href: '/reports', icon: BookOpen },
+  { label: 'Audit Log', href: '/audit', icon: ScrollText },
 ]
 
 const ADMIN_ITEMS: NavItem[] = [
@@ -51,7 +53,7 @@ const SECTION_GROUPS = [
   },
   {
     title: 'Operations',
-    items: NAV_ITEMS.slice(5, 9),
+    items: NAV_ITEMS.slice(5, 10),
   },
 ]
 
@@ -130,7 +132,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {group.title}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => (
+                {group.items.filter((item) => item.href !== '/audit' ||
+                  ['company_admin', 'platform_admin', 'hr_manager'].includes(user?.role ?? '')).map((item) => (
                   <SidebarItem
                     key={item.href}
                     item={item}
