@@ -48,3 +48,15 @@ def create_tables():
         workflow, qa, audit
     )
     Base.metadata.create_all(bind=engine)
+    _apply_light_migrations()
+
+
+def _apply_light_migrations():
+    """Add columns that older databases (e.g. the hand-written Supabase schema) lack."""
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    if "performance_reviews" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("performance_reviews")}
+        if "completed_at" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE performance_reviews ADD COLUMN completed_at TIMESTAMP"))

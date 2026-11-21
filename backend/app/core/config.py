@@ -13,7 +13,8 @@ class Settings(BaseSettings):
 
     # App
     APP_NAME: str = "HRMS Platform"
-    DEBUG: bool = True
+    DEBUG: bool = False
+    SEED_DEMO_DATA: bool = True
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS
