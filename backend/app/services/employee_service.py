@@ -52,7 +52,9 @@ def get_employees(
         query = query.filter(Employee.status == status)
 
     # Sorting
-    sort_col = getattr(Employee, sort_by, Employee.created_at)
+    if sort_by not in Employee.__table__.columns:
+        sort_by = "created_at"
+    sort_col = getattr(Employee, sort_by)
     if sort_order == "desc":
         query = query.order_by(sort_col.desc())
     else:
