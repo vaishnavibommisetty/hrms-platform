@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "HRMS Platform"
     DEBUG: bool = False
     SEED_DEMO_DATA: bool = True
+    # Vercel gives every deployment its own URL; allow all of this project's
+    ALLOWED_ORIGIN_REGEX: str = r"https://hrms-platform[a-z0-9-]*\.vercel\.app"
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS
